@@ -308,6 +308,8 @@ PBRT_CPU_GPU inline Vector3fi Transform::operator()(const Vector3fi &v) const {
 // Transform Inline Methods
 template <typename T>
 PBRT_CPU_GPU inline Point3<T> Transform::operator()(Point3<T> p) const {
+    // LOG_VERBOSE("[andythebreaker] Point3<T> Transform::operator()(Point3<T> p) %s",
+    // p.ToString());
     T xp = m[0][0] * p.x + m[0][1] * p.y + m[0][2] * p.z + m[0][3];
     T yp = m[1][0] * p.x + m[1][1] * p.y + m[1][2] * p.z + m[1][3];
     T zp = m[2][0] * p.x + m[2][1] * p.y + m[2][2] * p.z + m[2][3];
@@ -320,6 +322,8 @@ PBRT_CPU_GPU inline Point3<T> Transform::operator()(Point3<T> p) const {
 
 template <typename T>
 PBRT_CPU_GPU inline Vector3<T> Transform::operator()(Vector3<T> v) const {
+    // LOG_VERBOSE("[andythebreaker] Vector3<T> Transform::operator()(Vector3<T> v) %s",
+    // v.ToString());
     return Vector3<T>(m[0][0] * v.x + m[0][1] * v.y + m[0][2] * v.z,
                       m[1][0] * v.x + m[1][1] * v.y + m[1][2] * v.z,
                       m[2][0] * v.x + m[2][1] * v.y + m[2][2] * v.z);
@@ -328,9 +332,26 @@ PBRT_CPU_GPU inline Vector3<T> Transform::operator()(Vector3<T> v) const {
 template <typename T>
 PBRT_CPU_GPU inline Normal3<T> Transform::operator()(Normal3<T> n) const {
     T x = n.x, y = n.y, z = n.z;
-    return Normal3<T>(mInv[0][0] * x + mInv[1][0] * y + mInv[2][0] * z,
-                      mInv[0][1] * x + mInv[1][1] * y + mInv[2][1] * z,
-                      mInv[0][2] * x + mInv[1][2] * y + mInv[2][2] * z);
+    // BUGGY: Intentionally transform normals like vectors (wrong!)
+    // The correct transformation would use the transpose of the inverse:
+    Normal3<T> good = Normal3<T>(mInv[0][0] * x + mInv[1][0] * y + mInv[2][0] * z,
+                                 mInv[0][1] * x + mInv[1][1] * y + mInv[2][1] * z,
+                                 mInv[0][2] * x + mInv[1][2] * y + mInv[2][2] * z);
+
+    // Instead, we use the direct transformation matrix like for vectors
+    Normal3<T> no_good = Normal3<T>(m[0][0] * x + m[0][1] * y + m[0][2] * z,
+                                    m[1][0] * x + m[1][1] * y + m[1][2] * z,
+                                    m[2][0] * x + m[2][1] * y + m[2][2] * z);
+    
+    // Normalize the incorrectly transformed normal to prevent length errors
+    // This still demonstrates the incorrect direction but prevents Frame construction errors
+    no_good = Normalize(no_good);
+    
+    // LOG_VERBOSE("[andythebreaker] Normal3<T> Transform::operator()(Normal3<T> n) %s",
+    //             good.x == no_good.x && good.y == no_good.y && good.z == no_good.z
+    //                 ? "FUCKUP"
+    //                 : "KINDOFOK");
+    return good;//no_good;
 }
 
 PBRT_CPU_GPU inline Ray Transform::operator()(const Ray &r, Float *tMax) const {
@@ -348,7 +369,7 @@ PBRT_CPU_GPU inline Ray Transform::operator()(const Ray &r, Float *tMax) const {
 }
 
 PBRT_CPU_GPU inline RayDifferential Transform::operator()(const RayDifferential &r,
-                                             Float *tMax) const {
+                                                          Float *tMax) const {
     Ray tr = (*this)(Ray(r), tMax);
     RayDifferential ret(tr.o, tr.d, tr.time, tr.medium);
     ret.hasDifferentials = r.hasDifferentials;
@@ -429,7 +450,7 @@ PBRT_CPU_GPU inline Ray Transform::ApplyInverse(const Ray &r, Float *tMax) const
 }
 
 PBRT_CPU_GPU inline RayDifferential Transform::ApplyInverse(const RayDifferential &r,
-                                               Float *tMax) const {
+                                                            Float *tMax) const {
     Ray tr = ApplyInverse(Ray(r), tMax);
     RayDifferential ret(tr.o, tr.d, tr.time, tr.medium);
     ret.hasDifferentials = r.hasDifferentials;

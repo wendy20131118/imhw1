@@ -19,6 +19,7 @@ namespace pbrt {
 // Transform Function Definitions
 // clang-format off
 PBRT_CPU_GPU Transform Translate(Vector3f delta) {
+    //LOG_VERBOSE("[andythebreaker] Transform Translate %s", delta.ToString());
     SquareMatrix<4> m(1, 0, 0, delta.x,
                       0, 1, 0, delta.y,
                       0, 0, 1, delta.z,
@@ -1014,6 +1015,7 @@ PBRT_CPU_GPU Vector3f AnimatedTransform::operator()(Vector3f v, Float time) cons
 }
 
 PBRT_CPU_GPU Normal3f AnimatedTransform::operator()(Normal3f n, Float time) const {
+    //LOG_VERBOSE("[andythebreaker] PBRT_CPU_GPU Normal3f AnimatedTransform::operator()(Normal3f n, Float time)");
     if (!actuallyAnimated || time <= startTime)
         return startTransform(n);
     else if (time >= endTime)

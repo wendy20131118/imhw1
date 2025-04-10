@@ -37,6 +37,7 @@ CameraTransform::CameraTransform(const AnimatedTransform &worldFromCamera) {
         Float tMid = (worldFromCamera.startTime + worldFromCamera.endTime) / 2;
         Point3f pCamera = worldFromCamera(Point3f(0, 0, 0), tMid);
         worldFromRender = Translate(Vector3f(pCamera));
+        LOG_VERBOSE("RenderingCoordinateSystem~%s", worldFromRender.ToString());
         break;
     }
     case RenderingCoordinateSystem::World: {
